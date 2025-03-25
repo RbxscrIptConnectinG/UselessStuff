@@ -31,6 +31,9 @@
 
 --[[
 
+	* @ Check out bytenet: https://devforum.roblox.com/t/bytenet-advanced-networking-library-w-buffer-serialization-strict-luau-absurd-optimization-and-rbxts-support-043/2733365
+	    and documentation for it: https://ffrostfall.github.io/ByteNet/
+
 	* @ Ough.. type checking...
 	
 	* @ i had to make that module for type checking functions,
