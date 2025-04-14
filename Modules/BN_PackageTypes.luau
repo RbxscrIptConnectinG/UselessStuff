@@ -1,3 +1,5 @@
+--!nocheck
+--_scriptType="module"
 --[[
 
                                                   
