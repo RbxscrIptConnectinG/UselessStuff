@@ -1,5 +1,3 @@
---!nocheck
---_scriptType="module"
 --[[
 
                                                   
@@ -30,10 +28,13 @@
 --]]
 
 --[[
-
-	* @ Check out bytenet: https://devforum.roblox.com/t/bytenet-advanced-networking-library-w-buffer-serialization-strict-luau-absurd-optimization-and-rbxts-support-043/2733365
-	    and documentation for it: https://ffrostfall.github.io/ByteNet/
-
+	( Update: 14.04.2025 )
+	[+ PackageBase type]
+	[+ DefinedNameSpaceClient type]
+	[+ DefinedNameSpaceServer type]
+	[~ DefinedNameSpace type]
+	
+	
 	* @ Ough.. type checking...
 	
 	* @ i had to make that module for type checking functions,
@@ -45,37 +46,43 @@
 	
 	local ByteNetPackagesType = require(path.to.ByteNetPackagesType)
 	
-	type TableType = ByteNetPackagesType.TableType
-	type PackageServer = ByteNetPackagesType.PackageServer
-	type PackageClient = ByteNetPackagesType.PackageClient
+	local tbl = {} :: ByteNetPackagesType.TableType
 	
-	local cool_table : TableType = {}
-	
-	local Package_A1 : PackageServer = {}
-	local Package_A2 : PackageClient = {}
+	local Package_Server = {} :: ByteNetPackagesType.PackageServer
+	local Package_Client = {} :: ByteNetPackagesType.PackageClient
+	local Package_Base = {} :: ByteNetPackagesType.PackageBase
 	
 --]]
 export type UnknownFunction = (any?|nil)->(any?|nil)
 export type TableType = {[any]: any}
 export type DataType = TableType?|any?
-export type PackageServer = {
-	listen:(func:(Data:DataType,Player:Player)->())->(),
+
+export type PackageBase = { -- Base functions in package
+	listen:(func:(Data:DataType)->())->(),
+	getListeners:()->({[any]:(Data:DataType,Player:Player)->()}),
+	reader:(buffer: buffer, cursor: number)->(any),
+	wait:()->(UnknownFunction) -- coroutine.yield
+}
+
+export type PackageServer = PackageBase&{
 	sendToAll:(Data:DataType)->(),
 	sendToAllExcept:(Data:DataType,Player:Player)->(),
 	sendTo:(Data:DataType,Player:Player)->(),
 	sendToList:(Data:DataType,Players:{Player:Player})->(),
-	getListeners:()->({[any]:(Data:DataType,Player:Player)->()}),
-	reader:(buffer: buffer, cursor: number)->(any),
-	wait:()->(UnknownFunction) -- coroutine.yield
 }
-export type PackageClient = {
-	listen:(func:(Data:DataType)->())->(),
+export type PackageClient = PackageBase&{
 	send:(Data:DataType)->(),
-	getListeners:()->({[any]:(Data:DataType,Player:Player)->()}),
-	reader:(buffer: buffer, cursor: number)->(any),
-	wait:()->(UnknownFunction) -- coroutine.yield
 }
-export type DefinedNameSpace = {
-	[any]:PackageServer?|PackageClient?|any?
+
+--[[export type DefinedNameSpace = { -- you can make it non commentary and use it.. but i perfer DefinedNameSpaceClient and DefinedNameSpaceServer
+	[any]:PackageBase&(PackageServer|PackageClient)
+}]]
+
+export type DefinedNameSpaceClient = {
+	[any]:PackageBase&PackageClient
 }
+export type DefinedNameSpaceServer = {
+	[any]:PackageBase&PackageServer
+}
+
 return {}
