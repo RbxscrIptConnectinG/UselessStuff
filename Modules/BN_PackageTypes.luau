@@ -62,19 +62,20 @@ export type TableType = {[any]: any}
 export type DataType = TableType?|any?
 
 export type PackageBase = { -- Base functions in package
-	listen:(func:(Data:DataType)->())->(),
 	getListeners:()->({[any]:(Data:DataType,Player:Player)->()}),
 	reader:(buffer: buffer, cursor: number)->(any),
 	wait:()->(UnknownFunction) -- coroutine.yield
 }
 
 export type PackageServer = PackageBase&{
+	listen:(func:(Data:DataType,Player:Player)->())->(),
 	sendToAll:(Data:DataType)->(),
 	sendToAllExcept:(Data:DataType,Player:Player)->(),
 	sendTo:(Data:DataType,Player:Player)->(),
 	sendToList:(Data:DataType,Players:{Player:Player})->(),
 }
 export type PackageClient = PackageBase&{
+	listen:(func:(Data:DataType)->())->(),
 	send:(Data:DataType)->(),
 }
 
