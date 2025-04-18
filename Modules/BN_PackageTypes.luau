@@ -68,15 +68,15 @@ export type PackageBase = { -- Base functions in package
 }
 
 export type PackageServer = PackageBase&{
-	listen:(func:(Data:DataType,Player:Player)->())->(),
 	sendToAll:(Data:DataType)->(),
 	sendToAllExcept:(Data:DataType,Player:Player)->(),
 	sendTo:(Data:DataType,Player:Player)->(),
 	sendToList:(Data:DataType,Players:{Player:Player})->(),
+	listen:(func:(Data:DataType,Player:Player)->())->(),
 }
 export type PackageClient = PackageBase&{
-	listen:(func:(Data:DataType)->())->(),
 	send:(Data:DataType)->(),
+	listen:(func:(Data:DataType)->())->(),
 }
 
 --[[export type DefinedNameSpace = { -- you can make it non commentary and use it.. but i perfer DefinedNameSpaceClient and DefinedNameSpaceServer
@@ -84,10 +84,10 @@ export type PackageClient = PackageBase&{
 }]]
 
 export type DefinedNameSpaceClient = {
-	[any]:PackageBase&PackageClient
+	[any]:PackageClient
 }
 export type DefinedNameSpaceServer = {
-	[any]:PackageBase&PackageServer
+	[any]:PackageServer
 }
 
 return {}
