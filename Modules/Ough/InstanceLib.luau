@@ -20,8 +20,6 @@ local instancelib
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 
-local Utils = script.Parent
-
 instancelib = {}
 local _game={
 	["FindFirstAncestorWhichIsA"]=game.FindFirstAncestorWhichIsA,
