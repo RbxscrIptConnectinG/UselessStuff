@@ -15,11 +15,15 @@
 
 --]]
 
-local Utils = game.ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Utils")
-local TableUtil = require(Utils:WaitForChild("ScriptingUtils"):WaitForChild("TableUtil"))
 local ContextActionService = game:GetService("ContextActionService")
 local Binder = {}
 Binder.__index = Binder
+
+local function FastRemove(t, i)
+	local n = #t
+	t[i] = t[n]
+	t[n] = nil
+end
 
 function Binder.newbinder()
 	local self = setmetatable({},Binder)
@@ -52,7 +56,7 @@ function Binder.newbinder()
 		local _id = "_bind."..actionName
 		assert((self._binds[_id]),"bind with that name doesn't exist")
 		ContextActionService:UnbindAction(actionName)
-		TableUtil.FastRemove(self._binds,_id)
+		FastRemove(self._binds,_id)
 		return
 	end
 	function self:unbindall()
