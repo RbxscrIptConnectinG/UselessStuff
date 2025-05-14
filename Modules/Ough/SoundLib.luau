@@ -15,6 +15,9 @@
 
 --]]
 
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+
 local SoundLib = {}
 
 local InstanceLib = script.Parent:FindFirstChild("InstanceLib") and require(script.Parent:FindFirstChild("InstanceLib"))
@@ -29,11 +32,15 @@ if (InstanceLib) then
 		_task=nil
 	end
 end
-
+function SoundLib.localEmitSound(Sound:Sound)
+	assert(RunService:IsClient(),"non client sided script")
+	assert(Sound,"sound is not valid")
+	SoundService:PlayLocalSound(Sound)
+end
 function SoundLib.emitSound(sound:Sound,parent:Instance,Additions:{[string]:any}|nil)
 	assert(sound,"sound is not valid")
 	assert(parent,"parent is not valid")
-	
+
 	local clone = sound:Clone()::Sound
 	if (Additions) and (InstanceLib) then
 		InstanceLib.setAdditions(clone,Additions)
