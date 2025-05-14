@@ -93,7 +93,39 @@ function instancelib.setAdditions(any:any,additions)
 	end
 	return Success,Output
 end
-
+function instancelib.removeAllCollision(instance:BasePart,Forcefully:boolean)
+	assert(instance:IsA("BasePart"),"first argument isn't a BasePart")
+	instance.CanCollide=false
+	instance.CanTouch=false
+	instance.CanQuery=false
+	instance.CollisionGroup="Default"
+	if Forcefully then
+		local connection1
+		local connection2
+		local connection3
+		local connection4
+		local connection5
+		connection1=instance:GetPropertyChangedSignal("CanCollide"):Connect(function()
+			instance.CanCollide=false
+		end)
+		connection2=instance:GetPropertyChangedSignal("CanTouch"):Connect(function()
+			instance.CanTouch=false
+		end)
+		connection3=instance:GetPropertyChangedSignal("CanQuery"):Connect(function()
+			instance.CanQuery=false
+		end)
+		connection4=instance:GetPropertyChangedSignal("CollisionGroup"):Connect(function()
+			instance.CollisionGroup="Default"
+		end)
+		connection5=instance.Destroying:Connect(function()
+			connection1:Disconnect()
+			connection2:Disconnect()
+			connection3:Disconnect()
+			connection4:Disconnect()
+			connection5:Disconnect()
+		end)
+	end
+end
 function instancelib.defaultRemove(_task,instance:Instance)
 	assert(instancelib.PropertyExists(instance,"Destroy"),"Second argument doesn't have Destroy function")
 	instance:Destroy()
@@ -122,7 +154,7 @@ end
 function instancelib.eventOnEmptyInstance(instance:Instance) : (RBXScriptSignal,()->())
 	assert(instance,"instance is not valid")
 	assert(typeof(instance)=="Instance","this value is not instance type")
-	
+
 	local _event = Instance.new("BindableEvent")
 	local _connection:RBXScriptConnection
 	_connection=instance.ChildRemoved:Connect(function(c)
