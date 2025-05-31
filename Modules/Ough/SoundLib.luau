@@ -48,7 +48,7 @@ function SoundLib.emitSound(sound:Sound,parent:Instance,Additions:{[string]:any}
 	local _task
 	clone.Parent=parent
 	clone:Play()
-	_task=task.delay(sound.TimeLength,InstanceLib and InstanceLib.defaultRemove or SoundLib.defaultRemove,_task,clone)
+	_task=task.delay(clone.TimeLength/clone.PlaybackSpeed,InstanceLib and InstanceLib.defaultRemove or SoundLib.defaultRemove,_task,clone)
 	return clone,_task
 end
 
