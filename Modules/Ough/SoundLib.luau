@@ -42,11 +42,29 @@ function SoundLib.emitSound(sound:Sound,parent:Instance,Additions:{[string]:any}
 	assert(parent,"parent is not valid")
 
 	local clone = sound:Clone()::Sound
+	
 	if (Additions) and (InstanceLib) then
 		InstanceLib.setAdditions(clone,Additions)
+	
 	end
 	local _task
-	clone.Parent=parent
+	if InstanceLib.typeof(parent,"CFrame") then
+		local attachment,removeattachment = InstanceLib.makeattachmentOn(parent)
+		clone.Parent=attachment
+		local event,_destroy = InstanceLib.eventOnEmptyInstance(attachment)
+		local _event_connection:RBXScriptConnection
+		_event_connection=event:Connect(function()
+			_event_connection:Disconnect()
+			_event_connection=nil
+			_destroy()
+			_destroy=nil
+			removeattachment()
+			removeattachment=nil
+			attachment=nil
+		end)
+	else
+		clone.Parent=parent
+	end
 	clone:Play()
 	_task=task.delay(clone.TimeLength/clone.PlaybackSpeed,InstanceLib and InstanceLib.defaultRemove or SoundLib.defaultRemove,_task,clone)
 	return clone,_task
