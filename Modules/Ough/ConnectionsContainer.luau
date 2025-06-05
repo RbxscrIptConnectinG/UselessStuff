@@ -14,7 +14,7 @@
 
 	--info--
 	
-	Version: 0.0.2
+	Version: 0.0.3
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -140,6 +140,8 @@ ConnectionsContainer._meta = {
 		if table.find(tbl,index) then
 			return tbl[index]
 		else
+			-- If you don't like it. switch it to commentary.
+			warn(`index "{index}" not found anywhere in`,tbl)
 			return nil
 		end
 	end,
