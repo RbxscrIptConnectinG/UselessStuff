@@ -14,12 +14,12 @@
 
 	--info--
 	
-	Version: 0.0.3
+	Version: 0.0.3p+
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
-		Remove: function(Index) -> removes connection|any from "_connections"|"_any" if found. returns nothing
-		RemoveAndDestroy: function(Index) -> removes connection|any from "_connections"|"_any" and destroys it if found. returns nothing
+		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
+		RemoveAndDestroy: function(Indexes) -> removes connection|any from "_connections"|"_any" and destroys|disconnects it. if found. returns nothing
 		
 		DisconnectAll: function(nil) -> disconnects everything in "_connections". returns nothing
 		DestroyAllAny: function(nil) -> destroys everything in "_any". returns nothing
@@ -70,36 +70,57 @@ ConnectionsContainer._selfBase = {
 		self._sort(self,index,any)
 		return any,index
 	end,
-	Remove=function(self,index)
-		local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-		assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
-		self[indexFoundIn][index]=nil
-		--print("successfully set it to nil.")
-	end,
-	RemoveAndDestroy=function(self,index)
-		local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-		assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
-		if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
-			self[indexFoundIn][index]:Destroy()
+	Remove=function(self,indexes)
+		local function indexOperation(index)
+			local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
+			assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
 			self[indexFoundIn][index]=nil
-		else
-			self[indexFoundIn][index]=nil
+			--print("successfully set it to nil.")
 		end
-		--print("successfully deleted it.")
+		if typeof(indexes)=="table" then
+			for _, index in pairs(indexes) do
+				indexOperation(index)
+			end
+		else
+			indexOperation(indexes)
+		end
+	end,
+	RemoveAndDestroy=function(self,indexes)
+		local function indexOperation(index)
+			local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
+			assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
+			if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
+				self[indexFoundIn][index]:Destroy()
+				self[indexFoundIn][index]=nil
+			elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
+				self[indexFoundIn][index]:Disconnect()
+				self[indexFoundIn][index]=nil
+			else
+				self[indexFoundIn][index]=nil
+			end
+			--print("successfully deleted it.")
+		end
+		if typeof(indexes)=="table" then
+			for _, index in pairs(indexes) do
+				indexOperation(index)
+			end
+		else
+			indexOperation(indexes)
+		end
 	end,
 	DisconnectAll=function(self)
 		debug.profilebegin("ConnectionsContainer->DisconnectAll()")
-		for Index = 1,#self._connections do
-			self._connections[Index]:Disconnect()
+		for Index,Connection in pairs(self._connections) do
+			Connection:Disconnect()
 			self._connections[Index]=nil
 		end
 		debug.profileend()
 	end,
 	DestroyAllAny=function(self)
 		debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
-		for Index = 1,#self._any do
-			if quickPropertyChecker(self._any[Index],"Destroy") then
-				self._any[Index]:Destroy()
+		for Index,Value in pairs(self._any) do
+			if quickPropertyChecker(Value,"Destroy") then
+				Value:Destroy()
 				self._any[Index]=nil
 			else
 				self._any[Index]=nil
@@ -150,8 +171,8 @@ ConnectionsContainer._meta = {
 function ConnectionsContainer.new() : 
 	({
 		Add:(self:any,any:any,index:any)->(any),
-		Remove:(self:any,index:any)->(),
-		RemoveAndDestroy:(self:any,index:any)->(),
+		Remove:(self:any,indexes:{any}|any)->(),
+		RemoveAndDestroy:(self:any,indexes:{any}|any)->(),
 		
 		DisconnectAll:(self:any)->(),
 		DestroyAllAny:(self:any)->(),
