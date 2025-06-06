@@ -14,7 +14,7 @@
 
 	--info--
 	
-	Version: 0.0.3p++
+	Version: 0.0.3p+++
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -53,134 +53,137 @@ local function quickPropertyChecker(instance:Instance,Property:string)
 	end))
 end
 ConnectionsContainer = {}
-ConnectionsContainer._sort = function(tbl,index,value)
-	if tbl["_className"] and tbl["_className"]=="ConnectionsContainer" then
-		tbl[typeof(value)=="RBXScriptConnection" and "_connections" or "_any"][index]=value
-	else
-		tbl[index]=value
-	end
-end
-ConnectionsContainer._selfBase = {
-	_className="ConnectionsContainer",
-	_connections={},
-	_any={},
-	_sort=ConnectionsContainer._sort,
-	Add=function(self,any,index)
-		index = index or #self[typeof(any)=="RBXScriptConnection" and "_connections" or "_any"]+1
-		self._sort(self,index,any)
-		return any,index
-	end,
-	Remove=function(self,indexes)
-		local function indexOperation(index)
-			local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-			assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
-			self[indexFoundIn][index]=nil
-			--print("successfully set it to nil.")
-		end
-		if typeof(indexes)=="table" then
-			for _, index in pairs(indexes) do
-				indexOperation(index)
-			end
-		else
-			indexOperation(indexes)
-		end
-	end,
-	RemoveAndDestroy=function(self,indexes)
-		local function indexOperation(index)
-			local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-			assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
-			if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
-				self[indexFoundIn][index]:Destroy()
-				self[indexFoundIn][index]=nil
-			elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
-				self[indexFoundIn][index]:Disconnect()
-				self[indexFoundIn][index]=nil
-			else
-				self[indexFoundIn][index]=nil
-			end
-			--print("successfully deleted it.")
-		end
-		if typeof(indexes)=="table" then
-			for _, index in pairs(indexes) do
-				indexOperation(index)
-			end
-		else
-			indexOperation(indexes)
-		end
-	end,
-	DisconnectAll=function(self)
-		debug.profilebegin("ConnectionsContainer->DisconnectAll()")
-		for Index,Connection in pairs(self._connections) do
-			Connection:Disconnect()
-			self._connections[Index]=nil
-		end
-		debug.profileend()
-	end,
-	DestroyAllAny=function(self)
-		debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
-		for Index,Value in pairs(self._any) do
-			if quickPropertyChecker(Value,"Destroy") then
-				Value:Destroy()
-				self._any[Index]=nil
-			else
-				self._any[Index]=nil
-			end
-		end
-		debug.profileend()
-	end,
-	SemiDestroy=function(self)
-		self:DisconnectAll()
-		self:DestroyAllAny()
-		--print("debug, destroyed")
-		return self
-	end,
-	Destroy=function(self)
-		self:SemiDestroy()
-		table.clear(self)
-		--print("debug, fully destroyed")
-		return self
-	end,
-}
-ConnectionsContainer._meta = {
-	__newindex = function(tbl,index,value)
-		if tbl["_sort"] then
-			tbl._sort(tbl,index,value)
-		else
-			tbl[index]=value
-		end
-	end,
-	__index = function(tbl,index)
-		if table.find(tbl,"_className") and tbl["_className"]=="ConnectionsContainer" then
-			if tbl["_connections"] and tbl["_connections"][index] then
-				return tbl["_connections"][index]
-			elseif tbl["_any"] and tbl["_any"][index] then
-				return tbl["_any"][index]
-			end
-		end
-		-- lord have mercy.
-		if table.find(tbl,index) then
-			return tbl[index]
-		else
-			-- If you don't like it. switch it to commentary.
-			warn(`index "{index}" not found anywhere in`,tbl)
-			return nil
-		end
-	end,
-}
+
+
 
 function ConnectionsContainer.new() : 
 	({
 		Add:(self:any,any:any,index:any)->(any),
 		Remove:(self:any,indexes:{any}|any)->(),
 		RemoveAndDestroy:(self:any,indexes:{any}|any)->(),
-		
+
 		DisconnectAll:(self:any)->(),
 		DestroyAllAny:(self:any)->(),
 		SemiDestroy:(self:any)->(),
 		Destroy:(self:any)->(),
 		[any]:any,
 	})
-	return setmetatable(table.clone(ConnectionsContainer._selfBase),table.clone(ConnectionsContainer._meta))
+	local selfBase = {
+		_className="ConnectionsContainer",
+		_connections={},
+		_any={},
+		_sort=function(self,index,value)
+			if self["_className"] and self["_className"]=="ConnectionsContainer" then
+				self[typeof(value)=="RBXScriptConnection" and "_connections" or "_any"][index]=value
+			else
+				self[index]=value
+			end
+		end,
+		Add=function(self,any,index)
+			index = index or #self[typeof(any)=="RBXScriptConnection" and "_connections" or "_any"]+1
+			self:_sort(index,any)
+			return any,index
+		end,
+		Remove=function(self,indexes)
+			local function indexOperation(index)
+				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
+				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
+				self[indexFoundIn][index]=nil
+				--print("successfully set it to nil.")
+			end
+			if typeof(indexes)=="table" then
+				for _, index in pairs(indexes) do
+					indexOperation(index)
+				end
+			else
+				indexOperation(indexes)
+			end
+		end,
+		RemoveAndDestroy=function(self,indexes)
+			local function indexOperation(index)
+				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
+				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
+				if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
+					self[indexFoundIn][index]:Destroy()
+					self[indexFoundIn][index]=nil
+				elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
+					self[indexFoundIn][index]:Disconnect()
+					self[indexFoundIn][index]=nil
+				else
+					self[indexFoundIn][index]=nil
+				end
+				--print("successfully deleted it.")
+			end
+			if typeof(indexes)=="table" then
+				for _, index in pairs(indexes) do
+					indexOperation(index)
+				end
+			else
+				indexOperation(indexes)
+			end
+		end,
+		DisconnectAll=function(self)
+			debug.profilebegin("ConnectionsContainer->DisconnectAll()")
+			for Index,Connection in pairs(self._connections) do
+				Connection:Disconnect()
+				self._connections[Index]=nil
+			end
+			debug.profileend()
+		end,
+		DestroyAllAny=function(self)
+			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
+			for Index,Value in pairs(self._any) do
+				if quickPropertyChecker(Value,"Destroy") then
+					Value:Destroy()
+					self._any[Index]=nil
+				else
+					self._any[Index]=nil
+				end
+			end
+			debug.profileend()
+		end,
+		SemiDestroy=function(self)
+			self:DisconnectAll()
+			self:DestroyAllAny()
+			--print("debug, destroyed")
+			return self
+		end,
+		Destroy=function(self)
+			self:SemiDestroy()
+			table.clear(self)
+			--print("debug, fully destroyed")
+			return self
+		end,
+	}
+	
+	local meta = {
+		__newindex = function(tbl,index,value)
+			if tbl["_sort"] then
+				tbl:_sort(index,value)
+			else
+				tbl[index]=value
+			end
+		end,
+		__index = function(tbl,index)
+			if table.find(tbl,"_className") and tbl["_className"]=="ConnectionsContainer" then
+				if tbl["_connections"] and tbl["_connections"][index] then
+					return tbl["_connections"][index]
+				elseif tbl["_any"] and tbl["_any"][index] then
+					return tbl["_any"][index]
+				end
+			end
+			-- lord have mercy.
+			if table.find(tbl,index) then
+				return tbl[index]
+			else
+				-- If you don't like it. switch it to commentary.
+				warn(`index "{index}" not found anywhere in`,tbl)
+				return nil
+			end
+		end,
+	}
+	local self = setmetatable(selfBase,meta)
+	return self
 end
 
 return ConnectionsContainer
