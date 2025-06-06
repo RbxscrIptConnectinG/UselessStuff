@@ -53,21 +53,19 @@ local function quickPropertyChecker(instance:Instance,Property:string)
 	end))
 end
 ConnectionsContainer = {}
+export type ConnectionsContainerType = ({
+	Add:(self:any,any:any,index:any)->(any),
+	Remove:(self:any,indexes:{any}|any)->(),
+	RemoveAndDestroy:(self:any,indexes:{any}|any)->(),
 
+	DisconnectAll:(self:any)->(),
+	DestroyAllAny:(self:any)->(),
+	SemiDestroy:(self:any)->(),
+	Destroy:(self:any)->(),
+	[any]:any,
+})
+function ConnectionsContainer.new() : ConnectionsContainerType
 
-
-function ConnectionsContainer.new() : 
-	({
-		Add:(self:any,any:any,index:any)->(any),
-		Remove:(self:any,indexes:{any}|any)->(),
-		RemoveAndDestroy:(self:any,indexes:{any}|any)->(),
-
-		DisconnectAll:(self:any)->(),
-		DestroyAllAny:(self:any)->(),
-		SemiDestroy:(self:any)->(),
-		Destroy:(self:any)->(),
-		[any]:any,
-	})
 	local selfBase = {
 		_className="ConnectionsContainer",
 		_connections={},
