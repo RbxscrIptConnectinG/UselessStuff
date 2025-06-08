@@ -82,7 +82,8 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			self:_sort(index,any)
 			return any,index
 		end,
-		Remove=function(self,indexes)
+		Remove=function(self,...)
+			local indexes = typeof(...)~="table" and {...} or ...
 			local function indexOperation(index)
 				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
 				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
@@ -90,14 +91,17 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				--print("successfully set it to nil.")
 			end
 			if typeof(indexes)=="table" then
-				for _, index in pairs(indexes) do
+				for _, index in indexes do
 					indexOperation(index)
 				end
 			else
 				indexOperation(indexes)
 			end
+			table.clear(indexes)
+			indexes=nil
 		end,
-		RemoveAndDestroy=function(self,indexes)
+		RemoveAndDestroy=function(self,...)
+			local indexes = typeof(...)~="table" and {...} or ...
 			local function indexOperation(index)
 				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
 				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
@@ -113,16 +117,18 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				--print("successfully deleted it.")
 			end
 			if typeof(indexes)=="table" then
-				for _, index in pairs(indexes) do
+				for _, index in indexes do
 					indexOperation(index)
 				end
 			else
 				indexOperation(indexes)
 			end
+			table.clear(indexes)
+			indexes=nil
 		end,
 		DisconnectAll=function(self)
 			debug.profilebegin("ConnectionsContainer->DisconnectAll()")
-			for Index,Connection in pairs(self._connections) do
+			for Index,Connection in self._connections do
 				Connection:Disconnect()
 				self._connections[Index]=nil
 			end
@@ -130,7 +136,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		end,
 		DestroyAllAny=function(self)
 			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
-			for Index,Value in pairs(self._any) do
+			for Index,Value in self._any do
 				if quickPropertyChecker(Value,"Destroy") then
 					Value:Destroy()
 					self._any[Index]=nil
@@ -163,7 +169,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			end
 		end,
 		__index = function(tbl,index)
-			if table.find(tbl,"_className") and tbl["_className"]=="ConnectionsContainer" then
+			if tbl["_className"]=="ConnectionsContainer" then
 				if tbl["_connections"] and tbl["_connections"][index] then
 					return tbl["_connections"][index]
 				elseif tbl["_any"] and tbl["_any"][index] then
@@ -171,13 +177,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				end
 			end
 			-- lord have mercy.
-			if table.find(tbl,index) then
-				return tbl[index]
-			else
-				-- If you don't like it. switch it to commentary.
-				--warn(`index "{index}" not found anywhere in`,tbl)
-				return nil
-			end
+			return tbl[index]
 		end,
 	}
 	local self = setmetatable(selfBase,meta)
