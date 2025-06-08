@@ -14,7 +14,7 @@
 
 	--info--
 	
-	Version: 0.0.3p+++
+	Version: 0.0.3p++++
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -159,7 +159,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			return self
 		end,
 	}
-	
+
 	local meta = {
 		__newindex = function(tbl,index,value)
 			if tbl["_sort"] then
@@ -170,13 +170,16 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		end,
 		__index = function(tbl,index)
 			if tbl["_className"]=="ConnectionsContainer" then
-				if tbl["_connections"] and tbl["_connections"][index] then
+				if tbl["_connections"] and tbl["_connections"][index]~=nil then
+					
 					return tbl["_connections"][index]
-				elseif tbl["_any"] and tbl["_any"][index] then
+					
+				elseif tbl["_any"] and tbl["_any"][index]~=nil then
+					
 					return tbl["_any"][index]
+					
 				end
 			end
-			-- lord have mercy.
 			return tbl[index]
 		end,
 	}
