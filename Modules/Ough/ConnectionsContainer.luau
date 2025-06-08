@@ -13,7 +13,8 @@
 	(t10_kol): "unreadable."
 
 	--info--
-	
+
+	//FIXME - HOW MANY PLUSES IT WILL IT HAVE UNTIL IT'S FULLY FIXED?
 	Version: 0.0.3p++++
 	
 	ConnectionsContainer.new() = {
@@ -137,7 +138,10 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		DestroyAllAny=function(self)
 			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
 			for Index,Value in self._any do
-				if quickPropertyChecker(Value,"Destroy") then
+				if typeof(Value)~="table" and quickPropertyChecker(Value,"Destroy") then
+					Value:Destroy()
+					self._any[Index]=nil
+				elseif typeof(Value)=="table" and Value["Destroy"]~=nil then
 					Value:Destroy()
 					self._any[Index]=nil
 				else
