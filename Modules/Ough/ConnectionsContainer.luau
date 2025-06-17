@@ -14,7 +14,7 @@
 
 	--info--
 
-	Version: 0.0.4
+	Version: 0.0.4+
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -48,9 +48,10 @@
 --]]
 
 local function quickPropertyChecker(instance:Instance,Property:string)
-	return (pcall(function()
+	local success,output = pcall(function()
 		return instance[Property]
-	end))
+	end)
+	return success and output~=nil
 end
 ConnectionsContainer = {}
 export type ConnectionsContainerType = ({
@@ -72,9 +73,9 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		_any={},
 		_sort=function(self,index,value)
 			if self["_className"] and self["_className"]=="ConnectionsContainer" then
-				self[typeof(value)=="RBXScriptConnection" and "_connections" or "_any"][index]=value
+				rawset(self[typeof(value)=="RBXScriptConnection" and "_connections" or "_any"],index,value)
 			else
-				self[index]=value
+				rawset(self,index,value)
 			end
 		end,
 		Add=function(self,any,index)
@@ -87,7 +88,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			local function indexOperation(index)
 				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
 				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
-				self[indexFoundIn][index]=nil
+				rawset(self[indexFoundIn],index,nil)
 				--print("successfully set it to nil.")
 			end
 			if typeof(indexes)=="table" then
@@ -107,14 +108,14 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
 				if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
 					self[indexFoundIn][index]:Destroy()
-					self[indexFoundIn][index]=nil
+					rawset(self[indexFoundIn],index,nil)
 				elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
 					self[indexFoundIn][index]:Disconnect()
-					self[indexFoundIn][index]=nil
+					rawset(self[indexFoundIn],index,nil)
 				elseif typeof(self[indexFoundIn][index])=="thread" then
 					local task_success,task_output = pcall(task.cancel,self[indexFoundIn][index])
 					local coroutine_success,coroutine_output = pcall(coroutine.close,self[indexFoundIn][index])
-					self[indexFoundIn][index]=nil
+					rawset(self[indexFoundIn],index,nil)
 					if not task_success and not coroutine_success then
 						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
 						warn("TASK OUTPUT")
@@ -123,7 +124,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 						warn(coroutine_output)
 					end
 				else
-					self[indexFoundIn][index]=nil
+					rawset(self[indexFoundIn],index,nil)
 				end
 				--print("successfully deleted it.")
 			end
@@ -141,7 +142,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			debug.profilebegin("ConnectionsContainer->DisconnectAll()")
 			for Index,Connection in self._connections do
 				Connection:Disconnect()
-				self._connections[Index]=nil
+				rawset(self._connections,Index,nil)
 			end
 			debug.profileend()
 		end,
@@ -150,14 +151,14 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			for Index,Value in self._any do
 				if typeof(Value)~="table" and quickPropertyChecker(Value,"Destroy") then
 					Value:Destroy()
-					self._any[Index]=nil
+					rawset(self._any,Index,nil)
 				elseif typeof(Value)=="table" and Value["Destroy"]~=nil then
 					Value:Destroy()
-					self._any[Index]=nil
+					rawset(self._any,Index,nil)
 				elseif typeof(Value)=="thread" then
 					local task_success,task_output = pcall(task.cancel,Value)
 					local coroutine_success,coroutine_output = pcall(coroutine.close,Value)
-					self._any[Index]=nil
+					rawset(self._any,Index,nil)
 					if not task_success and not coroutine_success then
 						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
 						warn("TASK OUTPUT")
@@ -166,7 +167,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 						warn(coroutine_output)
 					end
 				else
-					self._any[Index]=nil
+					rawset(self._any,Index,nil)
 				end
 			end
 			debug.profileend()
@@ -187,25 +188,24 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 
 	local meta = {
 		__newindex = function(tbl,index,value)
-			if tbl["_sort"] then
+			if rawget(tbl,"_sort") then
 				tbl:_sort(index,value)
 			else
-				tbl[index]=value
+				rawset(tbl,index,value)
 			end
 		end,
 		__index = function(tbl,index)
-			if tbl["_className"]=="ConnectionsContainer" then
-				if tbl["_connections"] and tbl["_connections"][index]~=nil then
+			--rawget fixes C stack overflow error.
+			if tbl["_connections"] and tbl["_connections"][index]~=nil then
 
-					return tbl["_connections"][index]
+				return rawget(tbl["_connections"],index)
 
-				elseif tbl["_any"] and tbl["_any"][index]~=nil then
+			elseif tbl["_any"] and tbl["_any"][index]~=nil then
 
-					return tbl["_any"][index]
+				return rawget(tbl["_any"],index)
 
-				end
 			end
-			return tbl[index]
+			return rawget(tbl, index)
 		end,
 	}
 	local self = setmetatable(selfBase,meta)
