@@ -152,7 +152,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			debug.profileend()
 		end,
 		DestroyAllAny=function(self)
-			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
+			debug.profilebegin("ConnectionsContainer->DestroyAllAny()")
 			for Index,Value in self._any do
 				self:RemoveAndDestroy(Index)
 			end
