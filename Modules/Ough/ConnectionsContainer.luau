@@ -14,7 +14,7 @@
 
 	--info--
 
-	Version: 0.0.4+
+	Version: 0.0.4++
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -108,14 +108,11 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
 				if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
 					self[indexFoundIn][index]:Destroy()
-					rawset(self[indexFoundIn],index,nil)
 				elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
 					self[indexFoundIn][index]:Disconnect()
-					rawset(self[indexFoundIn],index,nil)
 				elseif typeof(self[indexFoundIn][index])=="thread" then
 					local task_success,task_output = pcall(task.cancel,self[indexFoundIn][index])
 					local coroutine_success,coroutine_output = pcall(coroutine.close,self[indexFoundIn][index])
-					rawset(self[indexFoundIn],index,nil)
 					if not task_success and not coroutine_success then
 						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
 						warn("TASK OUTPUT")
@@ -123,9 +120,8 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 						warn("COROUTINE OUTPUT")
 						warn(coroutine_output)
 					end
-				else
-					rawset(self[indexFoundIn],index,nil)
 				end
+				rawset(self[indexFoundIn],index,nil)
 				--print("successfully deleted it.")
 			end
 			if typeof(indexes)=="table" then
