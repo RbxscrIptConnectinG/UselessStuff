@@ -44,7 +44,7 @@
 		
 		newContainer:Remove("CoolPart")
 	}
-
+	--goodluck ;)
 --]]
 
 local function quickPropertyChecker(instance:Instance,Property:string) --FIXED
