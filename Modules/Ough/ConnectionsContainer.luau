@@ -149,10 +149,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		DestroyAllAny=function(self)
 			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
 			for Index,Value in self._any do
-				if typeof(Value)~="table" and quickPropertyChecker(Value,"Destroy") then
-					Value:Destroy()
-					rawset(self._any,Index,nil)
-				elseif typeof(Value)=="table" and Value["Destroy"]~=nil then
+				if quickPropertyChecker(Value,"Destroy") then
 					Value:Destroy()
 					rawset(self._any,Index,nil)
 				elseif typeof(Value)=="thread" then
