@@ -44,10 +44,10 @@
 		
 		newContainer:Remove("CoolPart")
 	}
-	--goodluck ;)
+
 --]]
 
-local function quickPropertyChecker(instance:Instance,Property:string) --FIXED
+local function quickPropertyChecker(instance:Instance,Property:string)
 	local success,output = pcall(function()
 		return instance[Property]
 	end)
@@ -140,32 +140,15 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		end,
 		DisconnectAll=function(self)
 			debug.profilebegin("ConnectionsContainer->DisconnectAll()")
-			for Index,Connection in self._connections do
-				Connection:Disconnect()
-				rawset(self._connections,Index,nil)
+			for Index,Value in self._connections do --That works too.
+				self:RemoveAndDestroy(Index)
 			end
 			debug.profileend()
 		end,
 		DestroyAllAny=function(self)
 			debug.profilebegin("ConnectionsContainer->RemoveAllAny()")
 			for Index,Value in self._any do
-				if quickPropertyChecker(Value,"Destroy") then
-					Value:Destroy()
-					rawset(self._any,Index,nil)
-				elseif typeof(Value)=="thread" then
-					local task_success,task_output = pcall(task.cancel,Value)
-					local coroutine_success,coroutine_output = pcall(coroutine.close,Value)
-					rawset(self._any,Index,nil)
-					if not task_success and not coroutine_success then
-						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
-						warn("TASK OUTPUT")
-						warn(task_output)
-						warn("COROUTINE OUTPUT")
-						warn(coroutine_output)
-					end
-				else
-					rawset(self._any,Index,nil)
-				end
+				self:RemoveAndDestroy(Index)
 			end
 			debug.profileend()
 		end,
