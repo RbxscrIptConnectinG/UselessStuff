@@ -14,7 +14,7 @@
 
 	--info--
 
-	Version: 0.0.4++
+	Version: 0.0.4+++
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -46,7 +46,7 @@
 	}
 
 --]]
-
+local printPrefix = "[CONTAINER]"
 local function quickPropertyChecker(instance:Instance,Property:string)
 	local success,output = pcall(function()
 		return instance[Property]
@@ -65,6 +65,9 @@ export type ConnectionsContainerType = ({
 	Destroy:(self:any)->(),
 	[any]:any,
 })
+local function isConnection(value:any?) : (any:RBXScriptConnection|any) -> (boolean)
+	return typeof(value)=="RBXScriptConnection"
+end
 function ConnectionsContainer.new() : ConnectionsContainerType
 
 	local selfBase = {
@@ -72,24 +75,29 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		_connections={},
 		_any={},
 		_sort=function(self,index,value)
-			if self["_className"] and self["_className"]=="ConnectionsContainer" then
-				rawset(self[typeof(value)=="RBXScriptConnection" and "_connections" or "_any"],index,value)
-			else
-				rawset(self,index,value)
-			end
+			return rawset(self[isConnection(value) and "_connections" or "_any"],index,value)
 		end,
 		Add=function(self,any,index)
-			index = index or #self[typeof(any)=="RBXScriptConnection" and "_connections" or "_any"]+1
+			index = index or #self[isConnection(any) and "_connections" or "_any"]+1
 			self:_sort(index,any)
 			return any,index
 		end,
 		Remove=function(self,...)
+			debug.profilebegin("ConnectionsContainer->Remove()")
 			local indexes = typeof(...)~="table" and {...} or ...
 			local function indexOperation(index)
-				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
+				local indexFoundIn = 
+					self._connections[index]~=nil
+					and 
+					"_connections"
+					or
+					self._any[index]~=nil 
+					and 
+					"_any"
+					or nil
+				
+				assert(indexFoundIn~=nil,`can't find {tostring(index)} in "_connections" and "_any"`)
 				rawset(self[indexFoundIn],index,nil)
-				--print("successfully set it to nil.")
 			end
 			if typeof(indexes)=="table" then
 				for _, index in indexes do
@@ -100,29 +108,30 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			end
 			table.clear(indexes)
 			indexes=nil
+			debug.profileend()
 		end,
 		RemoveAndDestroy=function(self,...)
+			debug.profilebegin("ConnectionsContainer->RemoveAndDestroy()")
 			local indexes = typeof(...)~="table" and {...} or ...
 			local function indexOperation(index)
-				local indexFoundIn = self._connections[index] and "_connections" or self._any[index] and "_any" or nil
-				assert((indexFoundIn),`can't find {index} in "_connections" and "_any"`)
+				local indexFoundIn = self._connections[index]~=nil and "_connections" or self._any[index]~=nil and "_any" or nil
+				assert(indexFoundIn~=nil,`can't find {tostring(index)} in "_connections" and "_any"`)
 				if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
 					self[indexFoundIn][index]:Destroy()
-				elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
+				elseif isConnection(self[indexFoundIn][index]) then
 					self[indexFoundIn][index]:Disconnect()
 				elseif typeof(self[indexFoundIn][index])=="thread" then
 					local task_success,task_output = pcall(task.cancel,self[indexFoundIn][index])
 					local coroutine_success,coroutine_output = pcall(coroutine.close,self[indexFoundIn][index])
 					if not task_success and not coroutine_success then
-						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
-						warn("TASK OUTPUT")
-						warn(task_output)
-						warn("COROUTINE OUTPUT")
-						warn(coroutine_output)
+						warn(printPrefix,"ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
+						warn(printPrefix,"TASK OUTPUT")
+						warn(printPrefix,task_output)
+						warn(printPrefix,"COROUTINE OUTPUT")
+						warn(printPrefix,coroutine_output)
 					end
 				end
 				rawset(self[indexFoundIn],index,nil)
-				--print("successfully deleted it.")
 			end
 			if typeof(indexes)=="table" then
 				for _, index in indexes do
@@ -133,6 +142,7 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 			end
 			table.clear(indexes)
 			indexes=nil
+			debug.profileend()
 		end,
 		DisconnectAll=function(self)
 			debug.profilebegin("ConnectionsContainer->DisconnectAll()")
@@ -151,37 +161,35 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		SemiDestroy=function(self)
 			self:DisconnectAll()
 			self:DestroyAllAny()
-			--print("debug, destroyed")
 			return self
 		end,
 		Destroy=function(self)
 			self:SemiDestroy()
 			table.clear(self)
-			--print("debug, fully destroyed")
 			return self
 		end,
 	}
 
 	local meta = {
 		__newindex = function(tbl,index,value)
-			if rawget(tbl,"_sort") then
-				tbl:_sort(index,value)
-			else
-				rawset(tbl,index,value)
-			end
+			return tbl:_sort(index,value)
 		end,
 		__index = function(tbl,index)
 			--rawget fixes C stack overflow error.
-			if tbl["_connections"] and tbl["_connections"][index]~=nil then
-
-				return rawget(tbl["_connections"],index)
-
-			elseif tbl["_any"] and tbl["_any"][index]~=nil then
-
-				return rawget(tbl["_any"],index)
-
-			end
-			return rawget(tbl, index)
+			return 
+				rawget(tbl,"_connections")~=nil 
+				and 
+				rawget(tbl["_connections"],index)~=nil 
+				and 
+				rawget(tbl["_connections"],index)
+				or 
+				rawget(tbl,"_any")~=nil 
+				and 
+				rawget(tbl["_any"],index)~=nil 
+				and 
+				rawget(tbl["_any"],index)
+				or 
+				rawget(tbl,index)
 		end,
 	}
 	local self = setmetatable(selfBase,meta)
