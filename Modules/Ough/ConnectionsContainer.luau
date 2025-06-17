@@ -14,8 +14,7 @@
 
 	--info--
 
-	//FIXME - HOW MANY PLUSES IT WILL IT HAVE UNTIL IT'S FULLY FIXED?
-	Version: 0.0.3p++++
+	Version: 0.0.4
 	
 	ConnectionsContainer.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
@@ -112,6 +111,17 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				elseif typeof(self[indexFoundIn][index])=="RBXScriptConnection" then
 					self[indexFoundIn][index]:Disconnect()
 					self[indexFoundIn][index]=nil
+				elseif typeof(self[indexFoundIn][index])=="thread" then
+					local task_success,task_output = pcall(task.cancel,self[indexFoundIn][index])
+					local coroutine_success,coroutine_output = pcall(coroutine.close,self[indexFoundIn][index])
+					self[indexFoundIn][index]=nil
+					if not task_success and not coroutine_success then
+						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
+						warn("TASK OUTPUT")
+						warn(task_output)
+						warn("COROUTINE OUTPUT")
+						warn(coroutine_output)
+					end
 				else
 					self[indexFoundIn][index]=nil
 				end
@@ -144,6 +154,17 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 				elseif typeof(Value)=="table" and Value["Destroy"]~=nil then
 					Value:Destroy()
 					self._any[Index]=nil
+				elseif typeof(Value)=="thread" then
+					local task_success,task_output = pcall(task.cancel,Value)
+					local coroutine_success,coroutine_output = pcall(coroutine.close,Value)
+					self._any[Index]=nil
+					if not task_success and not coroutine_success then
+						warn("ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
+						warn("TASK OUTPUT")
+						warn(task_output)
+						warn("COROUTINE OUTPUT")
+						warn(coroutine_output)
+					end
 				else
 					self._any[Index]=nil
 				end
@@ -175,13 +196,13 @@ function ConnectionsContainer.new() : ConnectionsContainerType
 		__index = function(tbl,index)
 			if tbl["_className"]=="ConnectionsContainer" then
 				if tbl["_connections"] and tbl["_connections"][index]~=nil then
-					
+
 					return tbl["_connections"][index]
-					
+
 				elseif tbl["_any"] and tbl["_any"][index]~=nil then
-					
+
 					return tbl["_any"][index]
-					
+
 				end
 			end
 			return tbl[index]
