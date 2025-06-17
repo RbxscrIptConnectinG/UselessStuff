@@ -47,7 +47,7 @@
 
 --]]
 
-local function quickPropertyChecker(instance:Instance,Property:string)
+local function quickPropertyChecker(instance:Instance,Property:string) --FIXED
 	local success,output = pcall(function()
 		return instance[Property]
 	end)
