@@ -177,7 +177,7 @@ function Container.new() : ContainerType
 			debug.profileend()
 		end,
 		RemoveAndDestroyAllIn=function(self,Where:"Connections"|"Any"|"Both")
-			debug.profilebegin("Container->RemoveAllIn()")
+			debug.profilebegin("Container->RemoveAndDestroyAllIn()")
 			local tbl = `_{string.lower(Where)}`
 			if tbl=="_both" then --both
 				task.spawn(function()
