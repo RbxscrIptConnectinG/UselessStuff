@@ -21,7 +21,7 @@
 		RemoveAndDestroy: function(Indexes) -> removes connection|any from "_connections"|"_any" and destroys|disconnects it. if found. returns nothing
 		
 		RemoveAllIn: function("Connections"|"Any"|"Both") -> removes everything from selected table. returns nothing
-		RemoveAndDestroyAllIn: function("Connections"|"Any"|"Both") -> removes and destroys everything from selected table. returns nothing
+		RemoveAndDestroyAllIn: function("Connections"|"Any"|"Both") -> removes and destroys|disconnects everything from selected table. returns nothing
 		
 		DisconnectAll: function(nil) -> disconnects everything in "_connections". returns nothing
 		DestroyAllAny: function(nil) -> destroys everything in "_any". returns nothing
