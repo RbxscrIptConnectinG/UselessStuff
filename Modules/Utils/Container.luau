@@ -2,11 +2,10 @@
 --_scriptType="module"
 --[[
 
-	--made in T10-Studio by: "t10_kol"--
+	--made in T10-Studio by: t10_kol|ID:3264445159|"RbxscrIptConnectinG"--
 	
-	--rules--
-	
-	"module is free to use and edit, i don't care"
+	Copyright©: None, feel free to use, edit, sell and distribute
+				this util anywhere you want and any time you want ;)
 	
 	--dev commentary--
 	
