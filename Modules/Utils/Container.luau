@@ -13,12 +13,15 @@
 
 	--info--
 
-	Version: 0.0.5
+	Version: 0.0.5+
 	
 	Container.new() = {
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
 		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
 		RemoveAndDestroy: function(Indexes) -> removes connection|any from "_connections"|"_any" and destroys|disconnects it. if found. returns nothing
+		
+		RemoveAllIn: function("Connections"|"Any"|"Both") -> removes everything from selected table. returns nothing
+		RemoveAndDestroyAllIn: function("Connections"|"Any"|"Both") -> removes and destroys everything from selected table. returns nothing
 		
 		DisconnectAll: function(nil) -> disconnects everything in "_connections". returns nothing
 		DestroyAllAny: function(nil) -> destroys everything in "_any". returns nothing
@@ -53,10 +56,18 @@ local function quickPropertyChecker(instance:Instance,Property:string)
 	return success and output~=nil
 end
 Container = {}
+
+-- Чувствуешь брат?, связь с typechecking?
+
+export type containerTableSelection = "Connections"|"Any"|"Both"
+
 export type ContainerType = ({
 	Add:(self:any,any:any,index:any)->(any),
-	Remove:(self:any,indexes:{any}|any)->(),
-	RemoveAndDestroy:(self:any,indexes:{any}|any)->(),
+	Remove:(self:any,...any)->(),
+	RemoveAndDestroy:(self:any,...any)->(),
+	
+	RemoveAllIn:(self:any,Where:containerTableSelection) -> (),
+	RemoveAndDestroyAllIn:(self:any,Where:containerTableSelection) -> (),
 
 	DisconnectAll:(self:any)->(),
 	DestroyAllAny:(self:any)->(),
@@ -94,7 +105,7 @@ function Container.new() : ContainerType
 					and 
 					"_any"
 					or nil
-				
+
 				assert(indexFoundIn~=nil,`can't find {tostring(index)} in "_connections" and "_any"`)
 				rawset(self[indexFoundIn],index,nil)
 			end
@@ -107,6 +118,28 @@ function Container.new() : ContainerType
 			end
 			table.clear(indexes)
 			indexes=nil
+			debug.profileend()
+		end,
+		RemoveAllIn=function(self,Where:"Connections"|"Any"|"Both")
+			debug.profilebegin("Container->RemoveAllIn()")
+			local tbl = `_{string.lower(Where)}` -- oh.. that works too.
+			if tbl=="_both" then --both
+				--//CHANGEME i might going to use something else instead of task.spawn in the future.
+				task.spawn(function()
+					for _connections_index,_connections_value in pairs(self["_connections"]) do
+						self:Remove(_connections_index)
+					end
+				end)
+				task.spawn(function()
+					for _any_index,_any_value in pairs(self["_any"]) do
+						self:Remove(_any_index)
+					end
+				end)
+			else
+				for index,value in pairs(self[tbl]) do
+					self:Remove(index)
+				end
+			end
 			debug.profileend()
 		end,
 		RemoveAndDestroy=function(self,...)
@@ -143,23 +176,39 @@ function Container.new() : ContainerType
 			indexes=nil
 			debug.profileend()
 		end,
-		DisconnectAll=function(self)
+		RemoveAndDestroyAllIn=function(self,Where:"Connections"|"Any"|"Both")
+			debug.profilebegin("Container->RemoveAllIn()")
+			local tbl = `_{string.lower(Where)}`
+			if tbl=="_both" then --both
+				task.spawn(function()
+					for _connections_index,_connections_value in pairs(self["_connections"]) do
+						self:RemoveAndDestroy(_connections_index)
+					end
+				end)
+				task.spawn(function()
+					for _any_index,_any_value in pairs(self["_any"]) do
+						self:RemoveAndDestroy(_any_index)
+					end
+				end)
+			else
+				for index,value in pairs(self[tbl]) do
+					self:RemoveAndDestroy(index)
+				end
+			end
+			debug.profileend()
+		end,
+		DisconnectAll=function(self) --oh..
 			debug.profilebegin("Container->DisconnectAll()")
-			for Index,Value in self._connections do --That works too.
-				self:RemoveAndDestroy(Index)
-			end
+			self:RemoveAndDestroyAllIn("Connections")
 			debug.profileend()
 		end,
-		DestroyAllAny=function(self)
+		DestroyAllAny=function(self) --uh..
 			debug.profilebegin("Container->DestroyAllAny()")
-			for Index,Value in self._any do
-				self:RemoveAndDestroy(Index)
-			end
+			self:RemoveAndDestroyAllIn("Any")
 			debug.profileend()
 		end,
-		SemiDestroy=function(self)
-			self:DisconnectAll()
-			self:DestroyAllAny()
+		SemiDestroy=function(self) -- are you serious right now t10_kol?.
+			self:RemoveAndDestroyAllIn("Both")
 			return self
 		end,
 		Destroy=function(self)
@@ -175,6 +224,8 @@ function Container.new() : ContainerType
 		end,
 		__index = function(tbl,index)
 			--rawget fixes C stack overflow error.
+			--_connections has more priority in __index function.
+			--so think twice when before inserting 2 things with exact same name but with different types
 			return 
 				rawget(tbl,"_connections")~=nil 
 				and 
