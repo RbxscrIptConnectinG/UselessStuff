@@ -13,9 +13,11 @@
 
 	--info--
 
-	Version: 0.0.5+
+	Version: 0.0.6
 	
 	Container.new() = {
+		Validate: function(Indexes) -> checks for indexes in connection|any. returns booleans (found: true, not found: false)
+		
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
 		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
 		RemoveAndDestroy: function(Indexes) -> removes connection|any from "_connections"|"_any" and destroys|disconnects it. if found. returns nothing
@@ -62,10 +64,12 @@ Container = {}
 export type containerTableSelection = "Connections"|"Any"|"Both"
 
 export type ContainerType = ({
+	Validate:(self:any,...any)->(boolean),
+	
 	Add:(self:any,any:any,index:any)->(any),
 	Remove:(self:any,...any)->(),
 	RemoveAndDestroy:(self:any,...any)->(),
-	
+
 	RemoveAllIn:(self:any,Where:containerTableSelection) -> (),
 	RemoveAndDestroyAllIn:(self:any,Where:containerTableSelection) -> (),
 
@@ -86,6 +90,23 @@ function Container.new() : ContainerType
 		_any={},
 		_sort=function(self,index,value)
 			return rawset(self[isConnection(value) and "_connections" or "_any"],index,value)
+		end,
+		Validate=function(self,...)
+			local results = {}
+			local indexes = typeof(...)~="table" and {...} or ...
+			local function indexOperation(slot,index)
+				results[slot] = self._connections[index]~=nil or self._any[index]~=nil or false
+			end
+			if typeof(indexes)=="table" then
+				for slot, index in indexes do
+					indexOperation(slot,index)
+				end
+			else
+				indexOperation(indexes)
+			end
+			table.clear(indexes)
+			indexes=nil
+			return table.unpack(results)
 		end,
 		Add=function(self,any,index)
 			index = index or #self[isConnection(any) and "_connections" or "_any"]+1
