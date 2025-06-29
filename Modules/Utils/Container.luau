@@ -16,7 +16,7 @@
 	Version: 0.0.6
 	
 	Container.new() = {
-		Validate: function(Indexes) -> checks for indexes in connection|any. returns booleans (found: true, not found: false)
+		Validate: function(Indexes) -> checks for indexes in _connections|_any. returns booleans (found: true, not found: false)
 		
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
 		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
