@@ -54,7 +54,6 @@ Timer = {
 		local LocalTick = tick()
 		handler.TimerUpdated = Signal.new()
 		handler.TimerEnded = Signal.new()
-		--IsAClient and "bindToRenderStep" or IsAServer and "bindToStepped"
 		local Connect,Disconnect = StepUtils["bindToStepped"](function(DT)
 			if handler.Enabled then
 				local _time = math.clamp((handler.AllowFloats and (tick()-LocalTick) or math.floor((tick()-LocalTick))),0,math.huge)
@@ -71,12 +70,13 @@ Timer = {
 						handler.TimerUpdated:Fire(handler.Time)
 					end
 				end
-				return handler.Enabled
+				return true
 			else
 				LocalTick=tick()
-				return handler.Enabled
+				return true
 			end
 		end)
+		Connect()
 		handler.RenderDisconnect = Disconnect
 		function handler:Destroy()
 			handler.TimerUpdated:DisconnectAll()
@@ -85,7 +85,6 @@ Timer = {
 		end
 		function handler:Enable()
 			handler.Enabled=true
-			Connect()
 		end
 		function handler:Disable()
 			handler.Enabled=false
