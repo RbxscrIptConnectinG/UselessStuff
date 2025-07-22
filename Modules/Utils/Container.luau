@@ -124,8 +124,8 @@ Container._functions = {
 			local indexFoundIn = self._connections[index] ~= nil and "_connections"
 				or self._any[index] ~= nil and "_any"
 				or nil
-
-			assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+			--assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+			--^ uhh... just forget about that. maybe
 			rawset(self[indexFoundIn], index, nil)
 		end
 		if typeof(indexes) == "table" then
@@ -138,29 +138,6 @@ Container._functions = {
 		indexes = nil
 		debug.profileend()
 	end,
-	RemoveAllIn = function(self, locationName: "Connections" | "Any" | "Both") -- unoriginal name №1
-		assert(typeof(locationName) == "string", "what...")
-		debug.profilebegin("Container->RemoveAllIn()")
-		local tbl = `_{string.lower(locationName)}` -- oh.. that works too.
-		if tbl == "_both" then --both
-			--//CHANGEME i might going to use something else instead of task.spawn in the future.
-			task.spawn(function()
-				for _connections_index, _connections_value in pairs(self["_connections"]) do
-					self:Remove(_connections_index)
-				end
-			end)
-			task.spawn(function()
-				for _any_index, _any_value in pairs(self["_any"]) do
-					self:Remove(_any_index)
-				end
-			end)
-		else
-			for index, _ in pairs(self[tbl]) do
-				self:Remove(index)
-			end
-		end
-		debug.profileend()
-	end,
 	RemoveAndDestroy = function(self, ...) -- unoriginal name №2
 		debug.profilebegin("Container->RemoveAndDestroy()")
 		local indexes = typeof(...) ~= "table" and { ... } or ...
@@ -168,7 +145,11 @@ Container._functions = {
 			local indexFoundIn = self._connections[index] ~= nil and "_connections"
 				or self._any[index] ~= nil and "_any"
 				or nil
-			assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+			--assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+			--^ just no.
+			if indexFoundIn == nil then
+				return
+			end
 			if quickPropertyChecker(self[indexFoundIn][index], "Destroy") then
 				self[indexFoundIn][index]:Destroy()
 			elseif isConnection(self[indexFoundIn][index]) then
@@ -196,8 +177,31 @@ Container._functions = {
 		indexes = nil
 		debug.profileend()
 	end,
+	RemoveAllIn = function(self, locationName: "Connections" | "Any" | "Both") -- unoriginal name №1
+		assert(typeof(locationName) == "string", "not a string")
+		debug.profilebegin("Container->RemoveAllIn()")
+		local tbl = `_{string.lower(locationName)}` -- oh.. that works too.
+		if tbl == "_both" then --both
+			--//CHANGEME i might going to use something else instead of task.spawn in the future.
+			task.spawn(function()
+				for _connections_index, _connections_value in pairs(self["_connections"]) do
+					self:Remove(_connections_index)
+				end
+			end)
+			task.spawn(function()
+				for _any_index, _any_value in pairs(self["_any"]) do
+					self:Remove(_any_index)
+				end
+			end)
+		else
+			for index, _ in pairs(self[tbl]) do
+				self:Remove(index)
+			end
+		end
+		debug.profileend()
+	end,
 	RemoveAndDestroyAllIn = function(self, locationName: "Connections" | "Any" | "Both") -- unoriginal name №3
-		assert(typeof(locationName) == "string", "what...")
+		assert(typeof(locationName) == "string", "not a string")
 		debug.profilebegin("Container->RemoveAndDestroyAllIn()")
 		local tbl = `_{string.lower(locationName)}`
 		if tbl == "_both" then --both
