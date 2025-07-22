@@ -79,7 +79,7 @@ export type ContainerType = {
 	DestroyAllAny: (self: any) -> (),
 	SemiDestroy: (self: any) -> (),
 	Destroy: (self: any) -> (),
-	[any]: any | (any) -> any?,
+	[any]: any,
 }
 local function isConnection(value: any?): (any: RBXScriptConnection | any) -> boolean
 	return typeof(value) == "RBXScriptConnection"
