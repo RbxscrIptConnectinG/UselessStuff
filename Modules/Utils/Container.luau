@@ -4,8 +4,8 @@
 
 	--made in T10-Studio by: t10_kol|ID:3264445159|"RbxscrIptConnectinG"--
 	
-	Copyright©: None, feel free to use, edit, sell and distribute
-				this util anywhere you want and any time you want ;)
+	Copyright©: None, feel free to use, edit, sell and distribute this util 
+				anywhere you want and any time you want ;)
 	
 	--dev commentary--
 	
@@ -13,10 +13,11 @@
 
 	--info--
 
-	Version: 0.0.6
+	Version: 0.0.7
 	
 	Container.new() = {
-		Validate: function(Indexes) -> checks if indexes in "_connections"|"_any" are available. returns booleans (found: true, not found: false)
+		Validate: function(Indexes) -> checks if indexes in "_connections"|"_any" are available. returns ...boolean (found: true, not found: false)
+		Get: function(Indexes) -> gets items in "_connections"|"_any" if available. returns ...any
 
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
 		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
@@ -51,219 +52,217 @@
 
 --]]
 local printPrefix = "[CONTAINER]"
-local function quickPropertyChecker(instance:Instance,Property:string)
-	local success,output = pcall(function()
+local function quickPropertyChecker(instance: Instance, Property: string)
+	local success, output = pcall(function()
 		return instance[Property]
 	end)
-	return success and output~=nil
+	return success and output ~= nil
 end
-Container = {}
+local Container = {}
 
 -- Чувствуешь брат?, связь с typechecking?
 
-export type containerTableSelection = "Connections"|"Any"|"Both"
+export type containerTableSelection = "Connections" | "Any" | "Both"
 
-export type ContainerType = ({
-	Validate:(self:any,...any)->(boolean),
-	
-	Add:(self:any,any:any,index:any)->(any),
-	Remove:(self:any,...any)->(),
-	RemoveAndDestroy:(self:any,...any)->(),
+export type ContainerType = {
+	Validate: (self: any, ...any) -> ...boolean,
+	Get: (self: any, ...any) -> ...any,
 
-	RemoveAllIn:(self:any,Where:containerTableSelection) -> (),
-	RemoveAndDestroyAllIn:(self:any,Where:containerTableSelection) -> (),
+	Add: (self: any, any: any, index: any) -> any,
+	Remove: (self: any, ...any) -> (),
+	RemoveAndDestroy: (self: any, ...any) -> (),
 
-	DisconnectAll:(self:any)->(),
-	DestroyAllAny:(self:any)->(),
-	SemiDestroy:(self:any)->(),
-	Destroy:(self:any)->(),
-	[any]:any,
-})
-local function isConnection(value:any?) : (any:RBXScriptConnection|any) -> (boolean)
-	return typeof(value)=="RBXScriptConnection"
+	RemoveAllIn: (self: any, locationName: containerTableSelection) -> (),
+	RemoveAndDestroyAllIn: (self: any, locationName: containerTableSelection) -> (),
+
+	DisconnectAll: (self: any) -> (),
+	DestroyAllAny: (self: any) -> (),
+	SemiDestroy: (self: any) -> (),
+	Destroy: (self: any) -> (),
+	[any]: any | (any) -> any?,
+}
+local function isConnection(value: any?): (any: RBXScriptConnection | any) -> boolean
+	return typeof(value) == "RBXScriptConnection"
 end
-function Container.new() : ContainerType
-
+function Container.new(): ContainerType
 	local selfBase = {
-		_className="Container",
-		_connections={},
-		_any={},
-		_sort=function(self,index,value)
-			return rawset(self[isConnection(value) and "_connections" or "_any"],index,value)
+		_className = "Container",
+		_connections = {},
+		_any = {},
+		_sort = function(self, index, value)
+			return rawset(self[isConnection(value) and "_connections" or "_any"], index, value)
 		end,
-		Validate=function(self,...)
+		Validate = function(self, ...)
 			local results = {}
-			local indexes = typeof(...)~="table" and {...} or ...
-			local function indexOperation(slot,index)
-				results[slot] = self._connections[index]~=nil or self._any[index]~=nil or false
+			local indexes = typeof(...) ~= "table" and { ... } or ...
+			local function indexOperation(slot, index)
+				results[slot] = self._connections[index] ~= nil or self._any[index] ~= nil or false
 			end
-			if typeof(indexes)=="table" then
+			if typeof(indexes) == "table" then
 				for slot, index in indexes do
-					indexOperation(slot,index)
+					indexOperation(slot, index)
 				end
 			else
 				indexOperation(indexes)
 			end
-			table.clear(indexes)
-			indexes=nil
+			indexes = nil
 			return table.unpack(results)
 		end,
-		Add=function(self,any,index)
-			index = index or #self[isConnection(any) and "_connections" or "_any"]+1
-			self:_sort(index,any)
-			return any,index
+		Get = function(self, ...)
+			local results = {}
+			local indexes = typeof(...) ~= "table" and { ... } or ...
+			local function indexOperation(slot, index)
+				results[slot] = self._connections[index] or self._any[index]
+			end
+			if typeof(indexes) == "table" then
+				for slot, index in indexes do
+					indexOperation(slot, index)
+				end
+			else
+				indexOperation(indexes)
+			end
+			indexes = nil
+			return table.unpack(results)
 		end,
-		Remove=function(self,...)
+		Add = function(self, any, index)
+			index = index or #self[isConnection(any) and "_connections" or "_any"] + 1
+			self:_sort(index, any)
+			return any, index
+		end,
+		Remove = function(self, ...)
 			debug.profilebegin("Container->Remove()")
-			local indexes = typeof(...)~="table" and {...} or ...
+			local indexes = typeof(...) ~= "table" and { ... } or ...
 			local function indexOperation(index)
-				local indexFoundIn = 
-					self._connections[index]~=nil
-					and 
-					"_connections"
-					or
-					self._any[index]~=nil 
-					and 
-					"_any"
+				local indexFoundIn = self._connections[index] ~= nil and "_connections"
+					or self._any[index] ~= nil and "_any"
 					or nil
 
-				assert(indexFoundIn~=nil,`can't find {tostring(index)} in "_connections" and "_any"`)
-				rawset(self[indexFoundIn],index,nil)
+				assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+				rawset(self[indexFoundIn], index, nil)
 			end
-			if typeof(indexes)=="table" then
+			if typeof(indexes) == "table" then
 				for _, index in indexes do
 					indexOperation(index)
 				end
 			else
 				indexOperation(indexes)
 			end
-			table.clear(indexes)
-			indexes=nil
+			indexes = nil
 			debug.profileend()
 		end,
-		RemoveAllIn=function(self,Where:"Connections"|"Any"|"Both")
+		RemoveAllIn = function(self, locationName: "Connections" | "Any" | "Both") -- unoriginal name №1
+			assert(typeof(locationName) == "string", "what...")
 			debug.profilebegin("Container->RemoveAllIn()")
-			local tbl = `_{string.lower(Where)}` -- oh.. that works too.
-			if tbl=="_both" then --both
+			local tbl = `_{string.lower(locationName)}` -- oh.. that works too.
+			if tbl == "_both" then --both
 				--//CHANGEME i might going to use something else instead of task.spawn in the future.
 				task.spawn(function()
-					for _connections_index,_connections_value in pairs(self["_connections"]) do
+					for _connections_index, _connections_value in pairs(self["_connections"]) do
 						self:Remove(_connections_index)
 					end
 				end)
 				task.spawn(function()
-					for _any_index,_any_value in pairs(self["_any"]) do
+					for _any_index, _any_value in pairs(self["_any"]) do
 						self:Remove(_any_index)
 					end
 				end)
 			else
-				for index,value in pairs(self[tbl]) do
+				for index, _ in pairs(self[tbl]) do
 					self:Remove(index)
 				end
 			end
 			debug.profileend()
 		end,
-		RemoveAndDestroy=function(self,...)
+		RemoveAndDestroy = function(self, ...) -- unoriginal name №2
 			debug.profilebegin("Container->RemoveAndDestroy()")
-			local indexes = typeof(...)~="table" and {...} or ...
+			local indexes = typeof(...) ~= "table" and { ... } or ...
 			local function indexOperation(index)
-				local indexFoundIn = self._connections[index]~=nil and "_connections" or self._any[index]~=nil and "_any" or nil
-				assert(indexFoundIn~=nil,`can't find {tostring(index)} in "_connections" and "_any"`)
-				if quickPropertyChecker(self[indexFoundIn][index],"Destroy") then
+				local indexFoundIn = self._connections[index] ~= nil and "_connections"
+					or self._any[index] ~= nil and "_any"
+					or nil
+				assert(indexFoundIn ~= nil, `can't find {tostring(index)} in "_connections" and "_any"`)
+				if quickPropertyChecker(self[indexFoundIn][index], "Destroy") then
 					self[indexFoundIn][index]:Destroy()
 				elseif isConnection(self[indexFoundIn][index]) then
 					self[indexFoundIn][index]:Disconnect()
-				elseif typeof(self[indexFoundIn][index])=="thread" then
-					local task_success,task_output = pcall(task.cancel,self[indexFoundIn][index])
-					local coroutine_success,coroutine_output = pcall(coroutine.close,self[indexFoundIn][index])
+				elseif typeof(self[indexFoundIn][index]) == "thread" then
+					local task_success, task_output = pcall(task.cancel, self[indexFoundIn][index])
+					local coroutine_success, coroutine_output = pcall(coroutine.close, self[indexFoundIn][index])
 					if not task_success and not coroutine_success then
-						warn(printPrefix,"ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
-						warn(printPrefix,"TASK OUTPUT")
-						warn(printPrefix,task_output)
-						warn(printPrefix,"COROUTINE OUTPUT")
-						warn(printPrefix,coroutine_output)
+						warn(printPrefix, "ERROR IN DestroyAllAny()->coroutine.close & task.cancel")
+						warn(printPrefix, "TASK OUTPUT")
+						warn(printPrefix, task_output)
+						warn(printPrefix, "COROUTINE OUTPUT")
+						warn(printPrefix, coroutine_output)
 					end
 				end
-				rawset(self[indexFoundIn],index,nil)
+				rawset(self[indexFoundIn], index, nil)
 			end
-			if typeof(indexes)=="table" then
+			if typeof(indexes) == "table" then
 				for _, index in indexes do
 					indexOperation(index)
 				end
 			else
 				indexOperation(indexes)
 			end
-			table.clear(indexes)
-			indexes=nil
+			indexes = nil
 			debug.profileend()
 		end,
-		RemoveAndDestroyAllIn=function(self,Where:"Connections"|"Any"|"Both")
+		RemoveAndDestroyAllIn = function(self, locationName: "Connections" | "Any" | "Both") -- unoriginal name №3
+			assert(typeof(locationName) == "string", "what...")
 			debug.profilebegin("Container->RemoveAndDestroyAllIn()")
-			local tbl = `_{string.lower(Where)}`
-			if tbl=="_both" then --both
+			local tbl = `_{string.lower(locationName)}`
+			if tbl == "_both" then --both
 				task.spawn(function()
-					for _connections_index,_connections_value in pairs(self["_connections"]) do
+					for _connections_index, _connections_value in pairs(self["_connections"]) do
 						self:RemoveAndDestroy(_connections_index)
 					end
 				end)
 				task.spawn(function()
-					for _any_index,_any_value in pairs(self["_any"]) do
+					for _any_index, _any_value in pairs(self["_any"]) do
 						self:RemoveAndDestroy(_any_index)
 					end
 				end)
 			else
-				for index,value in pairs(self[tbl]) do
+				for index, _ in pairs(self[tbl]) do
 					self:RemoveAndDestroy(index)
 				end
 			end
 			debug.profileend()
 		end,
-		DisconnectAll=function(self) --oh..
+		DisconnectAll = function(self) --oh..
 			debug.profilebegin("Container->DisconnectAll()")
 			self:RemoveAndDestroyAllIn("Connections")
 			debug.profileend()
 		end,
-		DestroyAllAny=function(self) --uh..
+		DestroyAllAny = function(self) --uh..
 			debug.profilebegin("Container->DestroyAllAny()")
 			self:RemoveAndDestroyAllIn("Any")
 			debug.profileend()
 		end,
-		SemiDestroy=function(self) -- are you serious right now t10_kol?.
+		SemiDestroy = function(self) -- are you serious right now t10_kol?.
 			self:RemoveAndDestroyAllIn("Both")
 			return self
 		end,
-		Destroy=function(self)
+		Destroy = function(self)
 			self:SemiDestroy()
 			table.clear(self)
 			return self
 		end,
 	}
 
-	local meta = {
-		__newindex = function(tbl,index,value)
-			return tbl:_sort(index,value)
+	local meta = { -- op meta.
+		__newindex = function(tbl, index, value)
+			return tbl:_sort(index, value)
 		end,
-		__index = function(tbl,index)
+		__index = function(tbl, index)
 			--rawget fixes C stack overflow error.
 			--_connections has more priority in __index function.
 			--so think twice when before inserting 2 things with exact same name but with different types
-			return 
-				rawget(tbl,"_connections")~=nil 
-				and 
-				rawget(tbl["_connections"],index)~=nil 
-				and 
-				rawget(tbl["_connections"],index)
-				or 
-				rawget(tbl,"_any")~=nil 
-				and 
-				rawget(tbl["_any"],index)~=nil 
-				and 
-				rawget(tbl["_any"],index)
-				or 
-				rawget(tbl,index)
+			return rawget(tbl["_connections"], index) or rawget(tbl["_any"], index) or rawget(tbl, index)
 		end,
 	}
-	local self = setmetatable(selfBase,meta)
+	local self = setmetatable(selfBase, meta)
 	return self
 end
 
