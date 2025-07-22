@@ -100,6 +100,18 @@ Container._functions = {
 		indexes = nil
 		return table.unpack(results)
 	end,
+	Set = function(self, index, any, destroy)
+		local indexFoundIn = self._connections[index] ~= nil and "_connections"
+			or self._any[index] ~= nil and "_any"
+			or nil
+		if indexFoundIn == nil then
+			return self:Add(any, index), nil, nil
+		else
+			local oldindex, oldvalue = index, self[indexFoundIn][index]
+			self[destroy and "RemoveAndDestroy" or "Remove"](self, index)
+			return self:Add(any, index), oldindex, oldvalue
+		end
+	end,
 	Add = function(self, any, index)
 		index = index or #self[isConnection(any) and "_connections" or "_any"] + 1
 		self:_sort(index, any)
@@ -234,22 +246,23 @@ export type containerTableSelection = "Connections" | "Any" | "Both"
 export type ContainerType = {
 	Validate: (self: any, ...any) -> ...boolean,
 	Get: (self: any, ...any) -> ...any,
+	Set: (self: any, index: any, any: any, useDestroy: boolean) -> (any, any, any | nil, any | nil),
 
-	Add: (self: any, any: any, index: any) -> any,
-	Remove: (self: any, ...any) -> (),
-	RemoveAndDestroy: (self: any, ...any) -> (),
+	Add: (self: any, any: any, index: any) -> (any, any),
+	Remove: (self: any, ...any) -> nil,
+	RemoveAndDestroy: (self: any, ...any) -> nil,
 
-	RemoveAllIn: (self: any, locationName: containerTableSelection) -> (),
-	RemoveAndDestroyAllIn: (self: any, locationName: containerTableSelection) -> (),
+	RemoveAllIn: (self: any, locationName: containerTableSelection) -> nil,
+	RemoveAndDestroyAllIn: (self: any, locationName: containerTableSelection) -> nil,
 
-	DisconnectAll: (self: any) -> (),
-	DestroyAllAny: (self: any) -> (),
-	SemiDestroy: (self: any) -> (),
-	Destroy: (self: any) -> (),
+	DisconnectAll: (self: any) -> nil,
+	DestroyAllAny: (self: any) -> nil,
+	SemiDestroy: (self: any) -> nil,
+	Destroy: (self: any) -> nil,
 	[any]: any,
 }
 
-function Container.new(...): (...{ [any]: any }) -> ContainerType
+function Container.new(preAddTable: { [any]: any } | nil): ContainerType
 	local selfBase = {
 		_className = "Container",
 		_connections = {},
@@ -272,14 +285,15 @@ function Container.new(...): (...{ [any]: any }) -> ContainerType
 	}
 	local self = setmetatable(selfBase, meta)
 
-	if ... ~= nil and typeof(...) == "table" then -- pre-add stuff. cool... isn't it?
-		for index, value in pairs(...) do
+	if preAddTable ~= nil and typeof(preAddTable) == "table" then -- pre-add stuff. cool... isn't it?
+		for index, value in pairs(preAddTable) do
 			self:Add(value, index)
 		end
-		table.clear(...)
+		table.clear(preAddTable)
+		preAddTable = nil
 	end
 
 	return self
 end
 
-return Container
+return Container :: { new: (preAddTable: { [any]: any } | nil) -> ContainerType }
