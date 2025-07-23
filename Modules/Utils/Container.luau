@@ -18,6 +18,8 @@
 	Container.new() = {
 		Validate: function(Indexes) -> checks if indexes in "_connections"|"_any" are available. returns ...boolean (found: true, not found: false)
 		Get: function(Indexes) -> gets items in "_connections"|"_any" if available. returns ...any
+		IsItIn: function(Index,"Connections"|"Any") -> checks if index is from "_connections"|"_any". returns boolean, value
+		IsIt: function(Index,type) -> type checking for value of that index. returns boolean
 
 		Add: function(connection|any,CustomIndex) -> adds connection|any into "_connections" if RBXScriptConnection or "_any" if anything else. returns connection|any, newindex
 		Remove: function(Indexes) -> removes connection|any from "_connections"|"_any" if found. returns nothing
@@ -111,6 +113,19 @@ Container._functions = {
 			self[destroy and "RemoveAndDestroy" or "Remove"](self, index)
 			return self:Add(any, index), oldindex, oldvalue
 		end
+	end,
+	IsItIn = function(self, index, In)
+		In = In == "Connections" and "_connections" or In == "Any" and "_any" or nil
+		assert(In ~= nil, "In is nil")
+		return self[In][index] ~= nil, self[In][index]
+	end,
+	IsIt = function(self, index, type)
+		type = type == "Connection" and "RBXScriptConnection" or type
+		local indexFound = self._connections[index] or self._any[index] or nil
+		if indexFound == nil then
+			return nil
+		end
+		return typeof(indexFound) == type
 	end,
 	Add = function(self, any, index)
 		index = index or #self[isConnection(any) and "_connections" or "_any"] + 1
@@ -251,6 +266,8 @@ export type ContainerType = {
 	Validate: (self: any, ...any) -> ...boolean,
 	Get: (self: any, ...any) -> ...any,
 	Set: (self: any, index: any, any: any, useDestroy: boolean) -> (any, any, any | nil, any | nil),
+	IsItIn: (self: any, index: any, In: "Connections" | "Any") -> (boolean, any),
+	IsIt: (self: any, index: any, type: string) -> boolean,
 
 	Add: (self: any, any: any, index: any) -> (any, any),
 	Remove: (self: any, ...any) -> nil,
