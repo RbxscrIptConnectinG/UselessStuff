@@ -1,3 +1,5 @@
+--DISCONTINUED, GO TO https://github.com/RbxscrIptConnectinG/Container
+
 --!nocheck
 --_scriptType="module"
 --[[
